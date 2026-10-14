@@ -1,0 +1,14 @@
+Windows监控录像机 · 本地人员识别依赖
+
+YOLOX-tiny (COCO person class 0, 416 × 416)
+来源：https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_tiny.onnx
+SHA-256：427cc366d34e27ff7a03e2899b5e3671425c262ea2291f88bb942bc1cc70b0f7
+许可：Apache License 2.0，详见 LICENSE-YOLOX.txt。
+
+Microsoft ONNX Runtime Java 1.20.0 (Windows x64, CPU)
+来源：https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/onnxruntime/1.20.0/onnxruntime-1.20.0.jar
+SHA-256：c46608681692b3693914defb42fa3119ad7cb6146870581ece247e0ed5793fe8
+许可：MIT License，详见 LICENSE-ONNXRuntime.txt。
+
+本项目只在本机分析完成的录像，不向外部服务上传监控画面。
+检测结果和时间轴标记受遮挡、暗光、目标大小和取样频率影响。

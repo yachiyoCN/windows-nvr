@@ -1,0 +1,899 @@
+openapi: 3.0.3
+info:
+  title: 录像机 App API
+  version: 1.2.0
+  description: >-
+    Android read-only API on 9079. Authenticate every metadata and media request
+    with an Authorization Bearer header after username/password login. Desktop
+    manages viewer users and camera grants. Legacy administrator API keys retain
+    access to all cameras. Browser-only session endpoints are on 8079. Secrets,
+    RTSP addresses and filesystem paths are never returned.
+servers:
+  - url: https://{host}:9079
+    variables:
+      host:
+        default: 127.0.0.1
+        description: Recorder computer IPv4 address or hostname
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/login:
+    post:
+      security: []
+      operationId: loginApp
+      summary: Log in with a desktop-created viewer account
+      description: >-
+        Returns a 15-minute Bearer token and a rotating 30-day refresh token. TLS is mandatory; refresh survives server restarts.
+        Passwords are never returned. Editing, disabling or deleting the account
+        revokes its tokens and active media, without affecting other users.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  maxLength: 64
+                password:
+                  type: string
+                  format: password
+                  maxLength: 256
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppLogin'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/Limited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/auth/refresh:
+    post:
+      security: []
+      operationId: refreshAppSession
+      summary: Rotate a remembered device login without sending the password
+      description: Reuse of the most recently spent refresh token revokes this device family. Other devices remain logged in.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+                  maxLength: 256
+      responses:
+        '200':
+          description: Rotated persistent login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppLogin'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/Limited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/auth/me:
+    get:
+      operationId: getAppIdentity
+      summary: Current viewer identity and granted existing camera IDs
+      responses:
+        '200':
+          description: Current identity; administrator key has null expiresAt
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [username, user, expiresAt]
+                properties:
+                  username:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/Viewer'
+                  expiresAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/auth/logout:
+    post:
+      operationId: logoutApp
+      summary: Revoke the current device family and its active media streams
+      description: An unexpired refreshToken alone can log out when the accessToken expired. Administrator keys must be rotated on the desktop.
+      security:
+        - bearerAuth: []
+        - {}
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+                  maxLength: 256
+      responses:
+        '200':
+          description: Current token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authenticated]
+                properties:
+                  authenticated:
+                    type: boolean
+                    enum: [false]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/server:
+    get:
+      operationId: getServer
+      summary: Recorder clock, common storage and capabilities
+      responses:
+        '200':
+          description: Recorder state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Server'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/cameras:
+    get:
+      operationId: listCameras
+      summary: Only cameras granted to the current viewer, without credentials
+      responses:
+        '200':
+          description: Camera list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [cameras]
+                properties:
+                  cameras:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Camera'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/cameras/{channelId}/live.jpg:
+    parameters:
+      - $ref: '#/components/parameters/ChannelId'
+    get:
+      operationId: getLiveJpeg
+      summary: Latest JPEG, at most 1280 pixels wide
+      responses:
+        '200':
+          description: Current camera image; initial connection waits up to 10 seconds
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/Limited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/cameras/{channelId}/live.mjpg:
+    parameters:
+      - $ref: '#/components/parameters/ChannelId'
+    get:
+      operationId: streamLiveMjpeg
+      summary: Multipart JPEG preview, approximately 5 fps, no audio
+      description: >-
+        Boundary is nvrframe, every part has Content-Length and image/jpeg.
+        Reconnect after normal end; one connection lasts at most 30 minutes.
+        Cancel when the view leaves screen. The global viewer limit is 24.
+      responses:
+        '200':
+          description: Authenticated live MJPEG stream
+          content:
+            multipart/x-mixed-replace:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/Limited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/recordings:
+    get:
+      operationId: listRecordings
+      summary: Recordings and person events overlapping an absolute time range
+      description: >-
+        The range is [from,to), up to 31 days and 20000 results. Defaults to the
+        recorder's local midnight through now. Results overlap the range and
+        may start before from. Active recordings with positive durationSeconds
+        are playable; refresh near their current tail for newly received data.
+      parameters:
+        - name: channelId
+          in: query
+          schema:
+            type: string
+          description: Omit to query all cameras granted to the current viewer; ungranted ID returns 404
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Recording list and query range
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [from, to, recordings]
+                properties:
+                  from:
+                    type: string
+                    format: date-time
+                  to:
+                    type: string
+                    format: date-time
+                  recordings:
+                    type: array
+                    maxItems: 20000
+                    items:
+                      $ref: '#/components/schemas/Recording'
+        '400':
+          $ref: '#/components/responses/Invalid'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          description: More than 20000 results; reduce the requested interval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/recording-days:
+    get:
+      operationId: getRecordingDays
+      summary: Available recording and person-event dates in recorder timezone
+      description: >-
+        One authorized camera and one calendar month, at most 20000 records.
+        Only dates with an existing file and positive available duration are
+        returned. Cross-midnight records cover all actual dates; person marks
+        cover only actual event intersections. End boundaries are exclusive.
+        Active marks appear only on the actual available-tail date. Overlapping
+        time intervals count once; DST days use their real elapsed duration.
+        The channel query alias is accepted; conflicting aliases return 400.
+      parameters:
+        - $ref: '#/components/parameters/ArchiveChannel'
+        - name: month
+          in: query
+          required: true
+          description: Recorder-local calendar month, supported years 1970 through 9998
+          schema:
+            type: string
+            pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+            example: '2026-10'
+      responses:
+        '200':
+          description: Ascending dates; days is empty when no retained recordings exist
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [channelId, month, timezone, days]
+                properties:
+                  channelId:
+                    type: string
+                  month:
+                    type: string
+                  timezone:
+                    type: string
+                    example: Asia/Shanghai
+                  days:
+                    type: array
+                    maxItems: 31
+                    items:
+                      $ref: '#/components/schemas/RecordingDay'
+        '400':
+          $ref: '#/components/responses/Invalid'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          description: More than 20000 records; query smaller intervals with recordings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/recording-bounds:
+    get:
+      operationId: getRecordingBounds
+      summary: Earliest start and latest exclusive end of all retained camera recordings
+      description: >-
+        One authorized camera, at most 100000 retained records. Existing files
+        and positive available durations only. Both bounds are null when empty.
+        Query the latest end vicinity and seek inside the last recording, not
+        at the exclusive lastRecording boundary. The channel alias is accepted;
+        conflicting aliases return 400. Does not reveal recording filesystem paths.
+      parameters:
+        - $ref: '#/components/parameters/ArchiveChannel'
+      responses:
+        '200':
+          description: Bounds over the camera's whole retained archive
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [channelId, timezone, firstRecording, lastRecording]
+                properties:
+                  channelId:
+                    type: string
+                  timezone:
+                    type: string
+                  firstRecording:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  lastRecording:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    description: End is exclusive
+        '400':
+          $ref: '#/components/responses/Invalid'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          description: More than 100000 records; query individual months instead
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/recordings/{recordingId}/media:
+    parameters:
+      - $ref: '#/components/parameters/RecordingId'
+    get:
+      operationId: streamPlaybackMp4
+      summary: H.264/AAC fragmented MP4 playback window
+      description: >-
+        Chunked MP4, at most 1280 pixels wide and 20 fps. Does not support HTTP
+        Range. Seek by replacing offsetSeconds; cancel the previous request.
+        Playback time is recording.start + offsetSeconds + player position.
+        At most two distinct windows are transcoded concurrently. Identical
+        recording/offset/duration windows share one memory-only transcode.
+      parameters:
+        - name: offsetSeconds
+          in: query
+          description: Must be smaller than the recording duration
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            default: 0
+        - name: durationSeconds
+          in: query
+          description: Automatically clipped to remaining recording duration
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            exclusiveMinimum: true
+            maximum: 300
+            default: 300
+      responses:
+        '200':
+          description: Progressive fragmented MP4
+          headers:
+            X-Playback-Offset-Seconds:
+              schema:
+                type: number
+                format: double
+            X-Playback-Duration-Seconds:
+              schema:
+                type: number
+                format: double
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/Invalid'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/Limited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/recordings/{recordingId}/download:
+    parameters:
+      - $ref: '#/components/parameters/RecordingId'
+      - name: Range
+        in: header
+        description: One range only, such as bytes=0-65535, bytes=65536- or bytes=-65536
+        schema:
+          type: string
+    get:
+      operationId: getOriginalRecording
+      summary: Original MKV at its recorded resolution
+      responses:
+        '200':
+          $ref: '#/components/responses/OriginalVideo'
+        '206':
+          $ref: '#/components/responses/OriginalVideo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '416':
+          $ref: '#/components/responses/UnsatisfiedRange'
+        '429':
+          $ref: '#/components/responses/Limited'
+    head:
+      operationId: headOriginalRecording
+      summary: Original video length and range headers without a body
+      responses:
+        '200':
+          description: Original file metadata
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Attachment filename contains channel number, recorder-local start and opaque recording ID
+            Content-Length:
+              schema:
+                type: integer
+                format: int64
+            Accept-Ranges:
+              schema:
+                type: string
+                enum: [bytes]
+        '206':
+          description: Requested range metadata; no body
+          headers:
+            Content-Length:
+              schema:
+                type: integer
+                format: int64
+            Content-Range:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '416':
+          $ref: '#/components/responses/UnsatisfiedRange'
+  /api/v1/session:
+    servers:
+      - url: https://{host}:8079
+        variables:
+          host:
+            default: 127.0.0.1
+    get:
+      security:
+        - webSession: []
+      operationId: getBrowserSession
+      summary: Browser session only; not an App login API
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authenticated:
+                    type: boolean
+                    enum: [false]
+    post:
+      security: []
+      operationId: loginBrowser
+      summary: Web username/password login, same-origin only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  maxLength: 64
+                remember:
+                  type: boolean
+                  default: true
+                  description: Persist a Secure cookie for 30 days and across recorder restarts.
+                password:
+                  type: string
+                  format: password
+                  maxLength: 256
+      responses:
+        '200':
+          description: Logged in; HttpOnly SameSite Strict NVR_SESSION cookie set
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Invalid request origin
+        '429':
+          $ref: '#/components/responses/Limited'
+    delete:
+      security:
+        - webSession: []
+      operationId: logoutBrowser
+      summary: End browser session and its active media streams
+      parameters:
+        - name: X-CSRF-Token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Logged out; cookie expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authenticated:
+                    type: boolean
+                    enum: [false]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Invalid origin or CSRF token
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: App login accessToken or optional all-camera administrator API key; only accepted on port 9079
+    webSession:
+      type: apiKey
+      in: cookie
+      name: NVR_SESSION
+      description: Browser session only on port 8079
+  parameters:
+    ArchiveChannel:
+      name: channelId
+      in: query
+      required: true
+      description: Authorized current camera ID; absent or unauthorized devices return the same 404
+      schema:
+        type: string
+    ChannelId:
+      name: channelId
+      in: path
+      required: true
+      schema:
+        type: string
+    RecordingId:
+      name: recordingId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9a-f]{32}$'
+  schemas:
+    RecordingDay:
+      type: object
+      required: [date, hasRecording, hasPersons, active, recordingCount, recordedSeconds, personSeconds, first, last]
+      properties:
+        date:
+          type: string
+          format: date
+          description: Calendar date in recorder timezone
+        hasRecording:
+          type: boolean
+          enum: [true]
+        hasPersons:
+          type: boolean
+          description: Actual known person-event interval intersects this day
+        active:
+          type: boolean
+          description: An active recording has its current available tail on this date
+        recordingCount:
+          type: integer
+          minimum: 1
+        recordedSeconds:
+          type: number
+          format: double
+          minimum: 0
+          description: Union of actually available recording intervals on this day
+        personSeconds:
+          type: number
+          format: double
+          minimum: 0
+          description: Union of actual event intervals clipped to recordings and this day
+        first:
+          type: string
+          format: date-time
+        last:
+          type: string
+          format: date-time
+          description: Latest exclusive end on this day
+    Viewer:
+      type: object
+      required: [id, username, administrator, channelIds]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        administrator:
+          type: boolean
+        channelIds:
+          type: array
+          maxItems: 16
+          description: Existing cameras granted to this viewer; administrators receive all current cameras
+          items:
+            type: string
+    AppLogin:
+      type: object
+      required: [accessToken, token, refreshToken, tokenType, username, expiresAt, refreshExpiresAt, user]
+      properties:
+        refreshToken:
+          type: string
+          description: Rotating device credential, 30 days after issuance; keep in encrypted private storage.
+        refreshExpiresAt:
+          type: string
+          format: date-time
+        accessToken:
+          type: string
+          description: Opaque random token; transmit only in Authorization header
+        token:
+          type: string
+          description: Compatibility alias of accessToken
+        tokenType:
+          type: string
+          enum: [Bearer]
+        username:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/Viewer'
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    Server:
+      type: object
+      required: [name, apiVersion, serverTime, timezone, maxBytes, usedBytes, keepDays, segmentMinutes, capabilities]
+      properties:
+        name:
+          type: string
+          example: 录像机
+        apiVersion:
+          type: string
+          example: '1'
+        serverTime:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+          example: Asia/Shanghai
+        maxBytes:
+          type: integer
+          format: int64
+        usedBytes:
+          type: integer
+          format: int64
+        keepDays:
+          type: integer
+        segmentMinutes:
+          type: integer
+        capabilities:
+          type: array
+          items:
+            type: string
+    Camera:
+      type: object
+      required: [id, name, number, online, recording, width, height, liveUrl]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        number:
+          type: integer
+          minimum: 1
+        online:
+          type: boolean
+        recording:
+          type: boolean
+        width:
+          type: integer
+          minimum: 0
+        height:
+          type: integer
+          minimum: 0
+        liveUrl:
+          type: string
+          description: Relative URL; App still sends Authorization Header
+    PersonInterval:
+      type: object
+      required: [startSeconds, endSeconds]
+      properties:
+        startSeconds:
+          type: number
+          format: double
+          minimum: 0
+        endSeconds:
+          type: number
+          format: double
+          minimum: 0
+          description: Must be at least startSeconds, measured from recording start
+    Recording:
+      type: object
+      required: [id, channelId, start, end, durationSeconds, bytes, active, persons, personStatus, mediaUrl, downloadUrl]
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9a-f]{32}$'
+        channelId:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        durationSeconds:
+          type: number
+          format: double
+          minimum: 0
+        bytes:
+          type: integer
+          format: int64
+          minimum: 0
+        active:
+          type: boolean
+          description: Still writing; playable when durationSeconds is positive. Refresh near the available edge.
+        persons:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonInterval'
+        personStatus:
+          type: string
+          enum: [PENDING, ANALYZING, READY, FAILED, DISABLED]
+        mediaUrl:
+          type: string
+        downloadUrl:
+          type: string
+    Session:
+      type: object
+      required: [authenticated, username, csrfToken]
+      properties:
+        authenticated:
+          type: boolean
+          enum: [true]
+        username:
+          type: string
+        csrfToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/Viewer'
+  responses:
+    Unauthorized:
+      description: Missing, invalid, expired or replaced credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Invalid:
+      description: Invalid parameter, offset or time interval
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Camera or recording not granted, missing, no playable data yet, or retained file already removed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Limited:
+      description: Viewer, login attempt or session limit reached
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unavailable:
+      description: Camera unavailable, two playback jobs busy, or component unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    OriginalVideo:
+      description: Original MKV bytes; Range responses include Content-Range
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+          description: 'attachment; filename="CH01_YYYYMMDD_HHMMSS_OPAQUE_RECORDING_ID.mkv"'
+        Accept-Ranges:
+          schema:
+            type: string
+            enum: [bytes]
+        Content-Length:
+          schema:
+            type: integer
+            format: int64
+        Content-Range:
+          schema:
+            type: string
+      content:
+        video/x-matroska:
+          schema:
+            type: string
+            format: binary
+    UnsatisfiedRange:
+      description: Invalid or unsupported range, including multiple ranges
+      headers:
+        Content-Range:
+          schema:
+            type: string
+            example: bytes */105000000
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

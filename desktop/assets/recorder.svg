@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <title>录像机</title>
+  <rect x="8" y="8" width="240" height="240" rx="26" fill="#2b2e35"/>
+  <rect x="47" y="54" width="120" height="100" rx="11" fill="#f8f9fa"/>
+  <path d="M170 78 207 62Q214 59 214 68V140Q214 149 207 146L170 130Z" fill="#f8f9fa"/>
+  <circle cx="99" cy="104" r="30" fill="#2b2e35"/>
+  <circle cx="99" cy="104" r="21" fill="#d72d33"/>
+  <circle cx="95" cy="100" r="6" fill="#f8f9fa"/>
+  <rect x="40" y="178" width="176" height="37" rx="5.5" fill="#f8f9fa"/>
+  <circle cx="61.5" cy="196.5" r="7.5" fill="#d72d33"/>
+  <path d="M146 197H160M176 197H190" stroke="#2b2e35" stroke-width="6" stroke-linecap="round"/>
+</svg>

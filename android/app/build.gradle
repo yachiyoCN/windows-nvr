@@ -1,0 +1,20 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'cn.homewatch.recorder'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'cn.homewatch.recorder'
+        minSdk 26
+        targetSdk 35
+        versionCode 9
+        versionName '1.5.1'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildTypes {
+        release { minifyEnabled false }
+    }
+}

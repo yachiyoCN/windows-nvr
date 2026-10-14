@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>录像机</title>
+  <link rel="icon" href="/recorder.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="icon-camera" viewBox="0 0 24 24"><path d="M8 6l2-3h4l2 3h5v15H3V6z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="icon-zoom" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M15 15l6 6M7 10h6M10 7v6"/></symbol>
+    <symbol id="icon-fullscreen" viewBox="0 0 24 24"><path d="M9 3H3v6M15 3h6v6M3 15v6h6M21 15v6h-6"/></symbol>
+    <symbol id="icon-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M15 4v16"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 16v5h16v-5"/></symbol>
+  </defs></svg>
+  <section id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card">
+      <img class="login-logo" src="/recorder.svg" width="52" height="52" alt="">
+      <h1>录像机</h1><p>实时预览 · 连续回放</p>
+      <label for="username">用户名</label><input id="username" name="username" autocomplete="username" required maxlength="64">
+      <label for="password">密码</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256">
+      <label class="remember-row"><input id="remember" name="remember" type="checkbox" checked><span>保持登录（30 天）</span></label>
+      <div id="login-error" class="form-error" role="alert"></div><button id="login-submit" class="primary" type="submit" disabled>正在连接…</button>
+      <div class="login-help">账号和安全连接地址在电脑端「远程访问」中设置<br>共用电脑可取消保持登录</div>
+    </form>
+  </section>
+  <div id="console" class="console" hidden>
+    <header class="topbar">
+      <div class="brand"><img src="/recorder.svg" width="24" height="24" alt=""><strong>录像机</strong><span>监控中心</span></div>
+      <time id="recorder-clock" aria-label="录像机时间">—</time><div class="account"><span id="account-name"></span><button id="logout" class="top-button">退出</button></div>
+    </header>
+    <nav class="toolbar" aria-label="查看模式和画面设置">
+      <div class="tabs" role="tablist" aria-label="查看模式"><button id="live-tab" role="tab" aria-selected="true" class="tab active">实时预览</button><button id="replay-tab" role="tab" aria-selected="false" class="tab">录像回放</button></div>
+      <label class="channel-select">通道<select id="camera-select" aria-label="当前通道"></select></label>
+      <div id="layout-controls" class="segmented" aria-label="分屏布局"><button data-layout="1" aria-pressed="true" title="单画面" aria-label="单画面" class="active">1</button><button data-layout="4" aria-pressed="false" title="四分屏" aria-label="四分屏">4</button><button data-layout="9" aria-pressed="false" title="九分屏" aria-label="九分屏">9</button></div>
+      <span class="toolbar-spacer"></span><div class="view-actions">
+        <button id="preview-toggle" title="暂停网页预览，录像继续" aria-pressed="false">暂停预览</button>
+        <button id="snapshot" title="保存当前选中画面的图片"><svg class="icon"><use href="#icon-camera"/></svg><span>抓图</span></button>
+        <button id="zoom-toggle" title="电子放大当前选中画面" aria-pressed="false"><svg class="icon"><use href="#icon-zoom"/></svg><span>放大</span></button>
+        <button id="sidebar-toggle" aria-expanded="true" aria-controls="sidebar" title="展开或收起通道与录像检索"><svg class="icon"><use href="#icon-panel"/></svg><span>侧栏</span></button>
+        <button id="fullscreen" title="全屏查看，保留回放控制"><svg class="icon"><use href="#icon-fullscreen"/></svg><span>全屏</span></button>
+      </div>
+    </nav>
+    <div id="notice" class="notice" role="status" hidden><span id="notice-text"></span><button id="notice-close" aria-label="关闭提示" title="关闭提示">×</button></div>
+    <main class="workspace">
+      <section id="view-area" class="view-area" aria-label="监控画面">
+        <div id="live-grid" class="live-grid layout-1"></div>
+        <div id="replay-surface" class="replay-surface" hidden><video id="replay-video" playsinline preload="metadata" muted></video><div id="replay-empty" class="surface-message">选择日期或拖动时间轴开始回放</div><div id="replay-name" class="channel-overlay"></div></div>
+        <div id="zoom-controls" class="zoom-controls" hidden><span>电子放大</span><button id="zoom-out" title="缩小" aria-label="缩小画面">−</button><span id="zoom-level">1×</span><button id="zoom-in" title="放大" aria-label="放大画面">＋</button><button id="zoom-reset">还原</button></div>
+        <div id="grid-pagination" class="grid-pagination" hidden><button id="page-prev">上一页</button><span id="page-label"></span><button id="page-next">下一页</button></div>
+      </section>
+      <aside id="sidebar" class="sidebar" aria-label="通道与录像检索">
+        <div class="side-heading"><div class="side-tabs" role="tablist" aria-label="侧栏内容"><button id="side-channels-tab" class="active" role="tab" aria-selected="true" aria-controls="channels-pane">通道</button><button id="side-archives-tab" role="tab" aria-selected="false" aria-controls="archives-pane">录像检索</button></div><button id="sidebar-close" class="subtle-button" title="收起侧栏" aria-label="收起侧栏">×</button></div>
+        <section id="channels-pane" class="side-pane" role="tabpanel" aria-labelledby="side-channels-tab">
+          <div class="channel-filter"><input id="camera-filter" type="search" placeholder="搜索通道名称" aria-label="搜索通道名称" maxlength="128"><span id="device-count"></span></div><div id="camera-list" class="camera-list"></div>
+          <section class="storage-panel"><h2>公共录像存储</h2><div class="storage-line"><span>录像占用</span><strong id="storage-usage">—</strong></div><div class="storage-meter"><div id="storage-fill"></div></div><div class="storage-line"><span>最大占用</span><span id="storage-limit">—</span></div><div class="storage-line"><span>保留时间</span><span id="storage-retention">—</span></div><div class="storage-line"><span>文件分段</span><span id="storage-segment">—</span></div><p>所有摄像头共用，保存规则在电脑端设置。</p></section>
+        </section>
+        <section id="archives-pane" class="side-pane" role="tabpanel" aria-labelledby="side-archives-tab" hidden>
+          <section class="calendar-panel" aria-label="录像日期"><div class="calendar-heading"><button id="calendar-prev" title="上个月" aria-label="上个月">‹</button><strong id="calendar-month">—</strong><button id="calendar-next" title="下个月" aria-label="下个月">›</button></div><div class="calendar-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div id="calendar-grid" class="calendar-grid" aria-label="选择录像日期"></div><div class="calendar-legend"><span><i class="recording-dot"></i>有录像</span><span><i class="person-dot"></i>有人事件</span></div></section>
+          <div class="archive-heading"><label for="archive-filter">录像列表</label><select id="archive-filter"><option value="all">全部录像</option><option value="persons">人员事件</option></select></div><div id="archive-list-summary" class="archive-list-summary" role="status">选择日期查看录像</div><div id="archive-list" class="archive-list"></div><button id="archive-more" class="archive-more" hidden>加载更多</button><div class="archive-download"><button id="download-current" disabled title="下载当前时间所在录像的原始文件"><svg class="icon"><use href="#icon-download"/></svg>下载当前录像</button></div>
+        </section>
+      </aside>
+    </main>
+    <section id="playback-panel" class="playback-panel" hidden aria-label="录像回放控制">
+      <div class="playback-head"><div class="date-navigation"><button id="date-prev" title="前一天" aria-label="前一天">‹</button><input id="recording-date" type="date" aria-label="录像日期"><button id="date-next" title="后一天" aria-label="后一天">›</button><button id="today" type="button">今天</button><button id="latest" type="button" title="定位到最新可播放录像">最新录像</button></div><span id="archive-summary" class="archive-summary" role="status"></span><span class="toolbar-spacer"></span><span id="range-badge" class="range-badge" hidden>区间查询</span><button id="clear-range" type="button" hidden>取消筛选</button><button id="range-toggle" type="button" aria-expanded="false" aria-controls="search-form">时间区间</button></div>
+      <form id="search-form" class="search-row" hidden><label>开始<input id="search-from" type="datetime-local" step="1" required aria-label="查询开始时间"></label><label>结束<input id="search-to" type="datetime-local" step="1" required aria-label="查询结束时间"></label><button id="search-submit" class="primary" type="submit">查询</button><span class="search-help">最多 31 天</span></form>
+      <div class="playback-controls"><div class="transport-controls"><button id="previous-clip" title="上一段录像">上一段</button><button id="skip-back" title="后退 10 秒">−10秒</button><button id="play-pause" class="primary" disabled>播放</button><button id="skip-forward" title="前进 10 秒">＋10秒</button><button id="next-clip" title="下一段录像">下一段</button></div><label class="speed-control"><span>速度</span><select id="playback-speed" aria-label="播放速度"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label><button id="mute" aria-pressed="true" title="切换回放声音">静音</button><time id="playback-time">—</time><button id="jump-toggle" title="输入准确时间定位" aria-expanded="false" aria-controls="jump-form">定位</button><span class="toolbar-spacer"></span><div class="event-navigation"><button id="previous-person" title="上一个已识别人员事件">上一事件</button><button id="next-person" title="下一个已识别人员事件">下一事件</button></div><label class="scale-control"><span>时间尺度</span><select id="timeline-scale" aria-label="时间轴显示范围"><option value="300000">5 分钟</option><option value="1800000">30 分钟</option><option value="3600000" selected>1 小时</option><option value="21600000">6 小时</option><option value="86400000">24 小时</option></select></label></div>
+      <form id="jump-form" class="jump-row" hidden><label for="jump-time">定位时间</label><input id="jump-time" type="datetime-local" step="1" required><button id="jump-submit" class="primary" type="submit">定位</button><button id="jump-cancel" type="button">收起</button></form>
+      <div class="timeline-wrap"><canvas id="timeline" tabindex="0" role="slider" aria-label="录像时间轴，拖动选择时间，滚轮缩放，方向键微调" aria-valuetext="尚未查询录像"></canvas><div id="timeline-hover" class="timeline-hover" hidden></div><div class="timeline-cursor" aria-hidden="true"><i></i></div></div>
+      <div class="timeline-footer"><time id="timeline-current-date">—</time><span class="timeline-legend"><i class="legend-recording"></i>录像<i class="legend-active"></i>录制中<i class="legend-person"></i>人员事件</span><span id="timeline-hint">拖动定位 · 滚轮缩放</span></div>
+    </section>
+    <footer class="statusbar"><span id="connection-summary">正在读取录像机状态</span><span id="selected-status"></span></footer>
+  </div>
+</body>
+</html>

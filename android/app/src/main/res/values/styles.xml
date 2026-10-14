@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="RecorderTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#2563EB</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">#F4F7FB</item>
+        <item name="android:navigationBarColor">#F4F7FB</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#F4F7FB</item>
+        <item name="android:textColorPrimary">#17243A</item>
+        <item name="android:textColorSecondary">#596B83</item>
+        <item name="android:colorControlNormal">#596B83</item>
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:dialogCornerRadius">0dp</item>
+        <item name="android:alertDialogTheme">@style/RecorderDialogTheme</item>
+        <item name="android:dialogTheme">@style/RecorderDialogTheme</item>
+        <item name="android:datePickerDialogTheme">@style/RecorderPickerTheme</item>
+        <item name="android:timePickerDialogTheme">@style/RecorderPickerTheme</item>
+    </style>
+    <style name="RecorderDarkTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#93BBFF</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:statusBarColor">#10151D</item>
+        <item name="android:navigationBarColor">#10151D</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#10151D</item>
+        <item name="android:textColorPrimary">#EDF2FA</item>
+        <item name="android:textColorSecondary">#AAB7CA</item>
+        <item name="android:colorControlNormal">#AAB7CA</item>
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:dialogCornerRadius">0dp</item>
+        <item name="android:alertDialogTheme">@style/RecorderDarkDialogTheme</item>
+        <item name="android:dialogTheme">@style/RecorderDarkDialogTheme</item>
+        <item name="android:datePickerDialogTheme">@style/RecorderDarkPickerTheme</item>
+        <item name="android:timePickerDialogTheme">@style/RecorderDarkPickerTheme</item>
+    </style>
+    <style name="RecorderDialogTheme" parent="android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#2563EB</item>
+        <item name="android:windowBackground">@drawable/dialog_square</item>
+        <item name="android:dialogCornerRadius">0dp</item>
+        <item name="android:textColorPrimary">#17243A</item>
+        <item name="android:textColorSecondary">#596B83</item>
+        <item name="android:datePickerDialogTheme">@style/RecorderPickerTheme</item>
+        <item name="android:timePickerDialogTheme">@style/RecorderPickerTheme</item>
+    </style>
+    <style name="RecorderDarkDialogTheme" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">#93BBFF</item>
+        <item name="android:windowBackground">@drawable/dialog_square_dark</item>
+        <item name="android:dialogCornerRadius">0dp</item>
+        <item name="android:textColorPrimary">#EDF2FA</item>
+        <item name="android:textColorSecondary">#AAB7CA</item>
+        <item name="android:datePickerDialogTheme">@style/RecorderDarkPickerTheme</item>
+        <item name="android:timePickerDialogTheme">@style/RecorderDarkPickerTheme</item>
+    </style>
+    <style name="RecorderPickerTheme" parent="android:style/Theme.Material.Light.Dialog">
+        <item name="android:colorAccent">#2563EB</item>
+        <item name="android:windowBackground">@drawable/dialog_square</item>
+        <item name="android:dialogCornerRadius">0dp</item>
+    </style>
+    <style name="RecorderDarkPickerTheme" parent="android:style/Theme.Material.Dialog">
+        <item name="android:colorAccent">#93BBFF</item>
+        <item name="android:windowBackground">@drawable/dialog_square_dark</item>
+        <item name="android:dialogCornerRadius">0dp</item>
+    </style>
+</resources>
