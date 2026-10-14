@@ -52,7 +52,7 @@ foreach ($item in @(Get-ChildItem -LiteralPath $runtimeRoot -Force -Recurse)) {
         Copy-NvrPackageFile $item.FullName $relative
     }
 }
-foreach ($relative in @('tools/ffmpeg.exe', 'tools/ffplay.exe', 'tools/ffprobe.exe', 'tools/StorageGuard.exe', 'tools/LICENSE', 'tools/README.txt', 'tools/下载校验.sha256',
+foreach ($relative in @('tools/ffmpeg.exe', 'tools/ffplay.exe', 'tools/ffprobe.exe', 'tools/StorageGuard.exe', 'tools/LICENSE', 'tools/README.txt', 'tools/ThirdPartyNotices.txt', 'tools/下载校验.sha256',
     'tools/person-detection/onnxruntime-1.20.0.jar', 'tools/person-detection/yolox_tiny.onnx', 'tools/person-detection/LICENSE-ONNXRuntime.txt',
     'tools/person-detection/LICENSE-YOLOX.txt', 'tools/person-detection/NOTICE.txt', 'tools/person-detection/native/onnxruntime.dll', 'tools/person-detection/native/onnxruntime4j_jni.dll')) {
     Copy-NvrPackageFile (Join-Path $installedRoot $relative) $relative

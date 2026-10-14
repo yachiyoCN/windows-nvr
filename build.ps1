@@ -193,6 +193,12 @@ if (!(Test-Path -LiteralPath $ffmpegReadme -PathType Leaf)) {
 }
 Copy-Item -LiteralPath $ffmpegLicense -Destination (Join-Path $applicationTools 'LICENSE')
 Copy-Item -LiteralPath $ffmpegReadme -Destination (Join-Path $applicationTools 'README.txt')
+foreach ($name in @('ThirdPartyNotices.txt')) {
+    $dependencyNotice = Join-Path $dependencyRoot $name
+    if (Test-Path -LiteralPath $dependencyNotice -PathType Leaf) {
+        Copy-Item -LiteralPath $dependencyNotice -Destination (Join-Path $applicationTools $name)
+    }
+}
 $ffmpegChecksum = Join-Path $dependencyRoot '下载校验.sha256'
 if (Test-Path -LiteralPath $ffmpegChecksum -PathType Leaf) {
     Copy-Item -LiteralPath $ffmpegChecksum -Destination (Join-Path $applicationTools '下载校验.sha256')

@@ -27,6 +27,8 @@ Windows监控录像机是一套面向家庭和小型场所的本地网络录像�
 
 ## 快速开始
 
+从 [Releases](https://github.com/yachiyoCN/windows-nvr/releases) 下载 Windows 压缩包或 Android 安装包。Windows 版包含运行环境和视频组件，解压即可使用。
+
 1. 运行打包目录中的 `录像机.exe`。
 2. 在“添加设备”中填写视频源地址和认证信息。
 3. 在“录像机设置”中选择保存目录、容量上限和保留天数。
