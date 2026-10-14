@@ -12,6 +12,12 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $projectRoot = [System.IO.Path]::GetFullPath($PSScriptRoot)
+$projectLegalFiles = @('LICENSE', 'NOTICE')
+foreach ($name in $projectLegalFiles) {
+    if (!(Test-Path -LiteralPath (Join-Path $projectRoot $name) -PathType Leaf)) {
+        throw ('缺少项目许可文件：' + $name)
+    }
+}
 
 function Resolve-ProjectPath {
     param([string]$Value, [string]$DefaultRelative)
@@ -115,6 +121,11 @@ Write-Host '正在编译 Java 程序和录像目录校验组件…'
 Invoke-BuildTool (Join-Path $jdkRoot 'bin/javac.exe') (
     @('--release', '21', '-encoding', 'UTF-8', '-d', $classesRoot) + $sourceFiles)
 if (!(Test-Path -LiteralPath $resourcesRoot -PathType Container)) { throw '缺少桌面资源目录 desktop/src/main/resources。' }
+$legalResources = Join-Path $classesRoot 'META-INF'
+New-Item -ItemType Directory -Path $legalResources -Force | Out-Null
+foreach ($name in $projectLegalFiles) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot $name) -Destination (Join-Path $legalResources $name)
+}
 Invoke-BuildTool (Join-Path $jdkRoot 'bin/jar.exe') @(
     '--create', '--file', $jarPath, '--main-class', 'cn.homewatch.HomeMonitor', '-C', $classesRoot, '.', '-C', $resourcesRoot, '.')
 Copy-Item -LiteralPath $jarPath -Destination (Join-Path $buildRoot 'home-monitor.jar') -Force
@@ -155,6 +166,10 @@ Invoke-BuildTool (Join-Path $jdkRoot 'bin/jpackage.exe') @(
     '--java-options', '-Duser.home=$APPDIR/../data',
     '--java-options', '-Djava.util.prefs.userRoot=$APPDIR/../data/prefs',
     '--java-options', '-XX:ErrorFile=$APPDIR/../data/logs/jvm-error-%p.log')
+
+foreach ($name in $projectLegalFiles) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot $name) -Destination (Join-Path $applicationRoot $name)
+}
 
 if ($LauncherOnly) {
     Write-Host ('启动器已生成：{0}' -f (Join-Path $applicationRoot ($applicationName + '.exe')))

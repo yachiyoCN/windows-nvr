@@ -1,5 +1,23 @@
 plugins { id 'com.android.application' }
 
+def projectLegalFiles = ['LICENSE', 'NOTICE'].collect { rootProject.file('../' + it) }
+def projectLegalAssets = layout.buildDirectory.dir('generated/licenseAssets')
+def prepareLicenseAssets = tasks.register('prepareLicenseAssets') {
+    inputs.files(projectLegalFiles)
+    outputs.dir(projectLegalAssets)
+    doLast {
+        projectLegalFiles.each { file ->
+            if (!file.isFile()) {
+                throw new GradleException('缺少项目许可文件：' + file.name)
+            }
+        }
+        copy {
+            from projectLegalFiles
+            into projectLegalAssets
+        }
+    }
+}
+
 android {
     namespace 'cn.homewatch.recorder'
     compileSdk 35
@@ -17,4 +35,9 @@ android {
     buildTypes {
         release { minifyEnabled false }
     }
+    sourceSets {
+        main { assets.srcDir(projectLegalAssets) }
+    }
 }
+
+tasks.named('preBuild').configure { dependsOn(prepareLicenseAssets) }

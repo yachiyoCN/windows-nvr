@@ -8,6 +8,13 @@
     [string]$KeyPasswordEnv = ''
 )
 $ErrorActionPreference = 'Stop'
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$projectLegalFiles = @('LICENSE', 'NOTICE')
+foreach ($name in $projectLegalFiles) {
+    if (!(Test-Path -LiteralPath (Join-Path $projectRoot $name) -PathType Leaf)) {
+        throw ('缺少项目许可文件：' + $name)
+    }
+}
 $sdk = (Resolve-Path -LiteralPath $SdkRoot).Path
 if ([string]::IsNullOrWhiteSpace($JdkRoot)) { throw '请用 -JdkRoot 指定 JDK 17 或更新版本。' }
 $jdk = (Resolve-Path -LiteralPath $JdkRoot).Path
@@ -23,7 +30,11 @@ $buildId = [guid]::NewGuid().ToString('N').Substring(0, 10)
 $classes = Join-Path $build "classes-$buildId"
 $generated = Join-Path $build "generated-$buildId"
 $dex = Join-Path $build "dex-$buildId"
-foreach ($folder in @($classes, $generated, $dex)) { New-Item -ItemType Directory -Force -Path $folder | Out-Null }
+$assets = Join-Path $build "assets-$buildId"
+foreach ($folder in @($classes, $generated, $dex, $assets)) { New-Item -ItemType Directory -Force -Path $folder | Out-Null }
+foreach ($name in $projectLegalFiles) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot $name) -Destination (Join-Path $assets $name)
+}
 $resources = Join-Path $build 'resources.zip'
 $manifest = Join-Path $build 'AndroidManifest.xml'
 [xml]$manifestXml = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'app\src\main\AndroidManifest.xml') -Raw -Encoding UTF8
@@ -45,7 +56,7 @@ function Native-Relative([string]$FullPath) {
 }
 # Windows aapt2 uses the active code page for paths; relative arguments keep Chinese project parent names working.
 Invoke-Checked (Join-Path $tools 'aapt2.exe') @('compile', '--dir', 'app\src\main\res', '-o', (Native-Relative $resources))
-Invoke-Checked (Join-Path $tools 'aapt2.exe') @('link', '-o', (Native-Relative $unsigned), '-I', (Native-Relative $platform), '--manifest', (Native-Relative $manifest), '--java', (Native-Relative $generated), '--min-sdk-version', '26', '--target-sdk-version', '35', '--version-code', '9', '--version-name', '1.5.1', '--auto-add-overlay', '-R', (Native-Relative $resources))
+Invoke-Checked (Join-Path $tools 'aapt2.exe') @('link', '-o', (Native-Relative $unsigned), '-I', (Native-Relative $platform), '--manifest', (Native-Relative $manifest), '--java', (Native-Relative $generated), '--min-sdk-version', '26', '--target-sdk-version', '35', '--version-code', '9', '--version-name', '1.5.1', '--auto-add-overlay', '-R', (Native-Relative $resources), '-A', (Native-Relative $assets))
 $sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'app\src\main\java') -Filter '*.java' -Recurse | ForEach-Object FullName)
 $sources += @(Get-ChildItem -LiteralPath $generated -Filter '*.java' -Recurse | ForEach-Object FullName)
 Invoke-Checked (Join-Path $jdk 'bin\javac.exe') (@('-J-Dfile.encoding=UTF-8', '-encoding', 'UTF-8', '--release', '17', '-classpath', $platform, '-d', $classes) + $sources)

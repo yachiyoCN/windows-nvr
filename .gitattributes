@@ -2,6 +2,8 @@
 
 .gitattributes text eol=lf
 .gitignore text eol=lf
+LICENSE text eol=lf
+NOTICE text eol=lf
 *.java text eol=lf
 *.cs text eol=lf
 *.gradle text eol=lf

@@ -39,6 +39,7 @@ function Write-NvrPackageText([string]$Relative, [string]$Text, [bool]$Bom = $tr
 }
 
 Copy-NvrPackageFile $jar 'app/home-monitor.jar'
+foreach ($name in @('LICENSE', 'NOTICE')) { Copy-NvrPackageFile (Join-Path $sourceRoot $name) $name }
 foreach ($relative in @('录像机.exe', 'app/录像机.cfg')) { Copy-NvrPackageFile (Join-Path $installedRoot $relative) $relative }
 $launcherConfig = Get-Content -LiteralPath (Join-Path $outputRoot 'app/录像机.cfg') -Raw -Encoding UTF8
 if ($launcherConfig -notmatch 'app.mainclass=cn.homewatch.HomeMonitor' -or $launcherConfig -match '(?i)[A-Z]:[\\/]|https?://|rtsps?://|password|token|credential') { throw '启动器参数含有本机地址、凭据或未知入口。' }

@@ -11,3 +11,7 @@
 
 仓库保存第三方许可文本和构建资料，不包含这些组件的二进制文件。
 
+根目录的 Apache License 2.0 适用于项目自有代码，不更改这些组件的许可证。FFmpeg 通过独立进程调用；随发布包分发其可执行文件时，须保留 GPLv3 许可和版权通知，并按 GPLv3 提供该构建对应的完整源码，包括其构建配置及适用的外部库源码。上游提交链接是来源线索，不能单独代替对应源码的分发要求。
+
+ONNX Runtime JAR 应完整保留，包括包内的 `ThirdPartyNotices.txt`。打包 OpenJDK 运行环境时须保留所选发行版的 `legal/` 文件。YOLOX 模型和 ONNX Runtime 的来源通知见 `person-detection/NOTICE.txt`。
+

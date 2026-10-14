@@ -78,13 +78,15 @@ Web 和 App API 默认关闭，启用后仅接受 HTTPS。请使用高强度密�
 - [OpenAPI 定义](docs/openapi.yaml)
 - [第三方组件](third_party/README.md)
 
-## 作者
+## 项目地址
 
-千夏Tesni
-
-- QQ：2758399324
-- 邮箱：yachi8000@yachiyo.cn
+- GitHub：https://github.com/yachiyoCN/windows-nvr
+- Gitee：https://gitee.com/yachiyoCN/windows-nvr
 
 ## 许可
 
-项目暂未声明开源许可证。除非另有书面授权，项目代码保留全部权利。第三方组件遵循各自的许可证，详见 [第三方组件](third_party/README.md)。
+项目自有代码采用 [Apache License 2.0](LICENSE)，允许商业使用、修改和分发。
+
+分发本项目或包含本项目代码的衍生版本时，须按许可证第 4 条保留适用的许可和归属通知，包括 [NOTICE](NOTICE) 中的项目链接，并在修改过的文件中注明修改。项目链接可以保留在随附的 NOTICE、源码或文档中，也可在通常展示第三方通知的位置显示。
+
+第三方组件遵循各自的许可证，根目录 LICENSE 不替代其原有许可，详见 [第三方组件](third_party/README.md)。

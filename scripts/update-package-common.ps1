@@ -43,7 +43,7 @@ function Assert-NvrRelativePath([string]$Relative) {
 
 function Test-NvrReleaseFile([string]$Relative) {
     Assert-NvrRelativePath $Relative
-    if ($Relative -in @('录像机.exe', 'app/home-monitor.jar', 'app/录像机.cfg', '使用说明.md',
+    if ($Relative -in @('LICENSE', 'NOTICE', '录像机.exe', 'app/home-monitor.jar', 'app/录像机.cfg', '使用说明.md',
         '手机摄像头接入说明.md', '加密连接与登录说明.md', '更新说明.md', '网页使用说明.md')) { return $true }
     if ($Relative -match '^tools/(ffmpeg\.exe|ffplay\.exe|ffprobe\.exe|StorageGuard\.exe|LICENSE|README\.txt|下载校验\.sha256)$') { return $true }
     if ($Relative -match '^tools/person-detection/(onnxruntime-1\.20\.0\.jar|yolox_tiny\.onnx|LICENSE-ONNXRuntime\.txt|LICENSE-YOLOX\.txt|NOTICE\.txt|native/onnxruntime\.dll|native/onnxruntime4j_jni\.dll)$') { return $true }
