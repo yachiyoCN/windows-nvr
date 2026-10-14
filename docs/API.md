@@ -1,5 +1,7 @@
 # 录像机 App API：HTTPS、用户权限与自动续期
 
+本文供客户端开发者使用。日常操作见 [使用说明](使用说明.md)。同目录的 [openapi.yaml](openapi.yaml) 用标准 OpenAPI 格式描述接口路径、参数和返回值，可导入 Swagger、Postman 等接口工具；录像机和现有 App 运行时不读取这个文件。
+
 App 服务固定为 **9079**，网页固定为 **8079**，两者均只接受 HTTPS。电脑用户管理负责新建账号和分配摄像头，权限覆盖实时、录像查询、回放和下载；新用户和新摄像头都不会自动授予权限。
 
 ## 验证加密连接
@@ -320,7 +322,7 @@ Cookie 使用 `Secure; HttpOnly; SameSite=Strict; Path=/`。登录JSON可提供 
 
 实时画面、MP4 和下载合计最多 24 条在途请求，支持九分屏加回放。Web/App访问会话合计最多128个、已保存手机登录族最多128个、并行密码验证2个、在途请求最多64个。App切换页面、通道或停止播放时须取消旧媒体连接。服务器不开放跨域CORS；Android原生HTTPS客户端遵守相同认证与媒体权限。
 
-机器可读协议见 [openapi.yaml](openapi.yaml)。
+接口工具使用的 OpenAPI 定义见 [openapi.yaml](openapi.yaml)，与本文描述同一组接口。
 
 ## 正在录制片段与低延迟人员事件
 

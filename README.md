@@ -74,8 +74,7 @@ Web 和 App API 默认关闭，启用后仅接受 HTTPS。请使用高强度密�
 
 - [使用说明](docs/使用说明.md)
 - [开发说明](docs/开发说明.md)
-- [App API](docs/API.md)
-- [OpenAPI 定义](docs/openapi.yaml)
+- [客户端开发接口](docs/API.md)（含供接口工具导入的 [OpenAPI 定义](docs/openapi.yaml)）
 - [第三方组件](third_party/README.md)
 
 ## 项目地址
@@ -85,7 +84,7 @@ Web 和 App API 默认关闭，启用后仅接受 HTTPS。请使用高强度密�
 
 ## 许可
 
-项目自有代码采用 [Apache License 2.0](LICENSE)，允许商业使用、修改和分发。
+项目自有代码采用 [Apache License 2.0](LICENSE)，允许商用、修改和分发。
 
 分发本项目或包含本项目代码的衍生版本时，须按许可证第 4 条保留适用的许可和归属通知，包括 [NOTICE](NOTICE) 中的项目链接，并在修改过的文件中注明修改。项目链接可以保留在随附的 NOTICE、源码或文档中，也可在通常展示第三方通知的位置显示。
 
